@@ -28,7 +28,12 @@ const Router = express.Router();
 // misc routes
 Router.get("/", miscCtrls.index);
 // file routes
-Router.post("/file/upload", isAuthenticated, upload.array("files"), fileCtrls.uploadFiles);
+Router.post(
+  "/file/upload",
+  isAuthenticated,
+  upload.array("files"),
+  fileCtrls.uploadFiles
+);
 // Auth Routes
 Router.post("/auth/token", isAuthenticated, authCtrls.token);
 Router.post("/auth/email", authCtrls.email);
@@ -55,10 +60,26 @@ Router.post("/test/new", isAuthenticated, testCtrls.new_test);
 Router.patch("/test/edit", isAuthenticated, testCtrls.edit_test);
 Router.delete("/test/delete", isAuthenticated, testCtrls.delete_test);
 // Notification Routes
-Router.get("/notification/get", isAuthenticated, notificationCtrls.get_notification);
-Router.post("/notification/new", isAuthenticated, notificationCtrls.new_notification);
-Router.patch("/notification/edit", isAuthenticated, notificationCtrls.edit_notification);
-Router.delete("/notification/delete", isAuthenticated, notificationCtrls.delete_notification);
+Router.get(
+  "/notification/get",
+  isAuthenticated,
+  notificationCtrls.get_notification
+);
+Router.post(
+  "/notification/new",
+  isAuthenticated,
+  notificationCtrls.new_notification
+);
+Router.patch(
+  "/notification/edit",
+  isAuthenticated,
+  notificationCtrls.edit_notification
+);
+Router.delete(
+  "/notification/delete",
+  isAuthenticated,
+  notificationCtrls.delete_notification
+);
 // Lecture Routes
 Router.get("/lecture/get", isAuthenticated, lectureCtrls.get_lecture);
 Router.post("/lecture/new", isAuthenticated, lectureCtrls.new_lecture);
@@ -67,35 +88,79 @@ Router.delete("/lecture/delete", isAuthenticated, lectureCtrls.delete_lecture);
 // Attendance Routes
 Router.get("/attendance/get", isAuthenticated, attendanceCtrls.get_attendance);
 Router.post("/attendance/new", isAuthenticated, attendanceCtrls.new_attendance);
-Router.patch("/attendance/edit", isAuthenticated, attendanceCtrls.edit_attendance);
-Router.delete("/attendance/delete", isAuthenticated, attendanceCtrls.delete_attendance);
+Router.patch(
+  "/attendance/edit",
+  isAuthenticated,
+  attendanceCtrls.edit_attendance
+);
+Router.delete(
+  "/attendance/delete",
+  isAuthenticated,
+  attendanceCtrls.delete_attendance
+);
 // Question Routes
 Router.get("/question/get", isAuthenticated, questionCtrls.get_question);
 Router.post("/question/new", isAuthenticated, questionCtrls.new_question);
 Router.patch("/question/edit", isAuthenticated, questionCtrls.edit_question);
-Router.delete("/question/delete", isAuthenticated, questionCtrls.delete_question);
+Router.delete(
+  "/question/delete",
+  isAuthenticated,
+  questionCtrls.delete_question
+);
 // Response Routes
 Router.get("/response/get", isAuthenticated, responseCtrls.get_response);
 Router.post("/response/new", isAuthenticated, responseCtrls.new_response);
 Router.post("/response/news", isAuthenticated, responseCtrls.new_responses);
 Router.patch("/response/edit", isAuthenticated, responseCtrls.edit_response);
-Router.delete("/response/delete", isAuthenticated, responseCtrls.delete_response);
+Router.delete(
+  "/response/delete",
+  isAuthenticated,
+  responseCtrls.delete_response
+);
 // Material Routes
 Router.get("/material/get", isAuthenticated, materialCtrls.get_material);
 Router.post("/material/new", isAuthenticated, materialCtrls.new_material);
 Router.patch("/material/edit", isAuthenticated, materialCtrls.edit_material);
-Router.delete("/material/delete", isAuthenticated, materialCtrls.delete_material);
+Router.delete(
+  "/material/delete",
+  isAuthenticated,
+  materialCtrls.delete_material
+);
 // Calendar Routes
 Router.get("/calendar/get", isAuthenticated, calendarCtrls.get_calendar);
 Router.post("/calendar/new", isAuthenticated, calendarCtrls.new_calendar);
 Router.patch("/calendar/edit", isAuthenticated, calendarCtrls.edit_calendar);
-Router.delete("/calendar/delete", isAuthenticated, calendarCtrls.delete_calendar);
+Router.delete(
+  "/calendar/delete",
+  isAuthenticated,
+  calendarCtrls.delete_calendar
+);
 // Performance Routes
-Router.get("/performance/get", isAuthenticated, performanceCtrls.get_performance);
-Router.post("/performance/new", isAuthenticated, performanceCtrls.new_performance);
-Router.patch("/performance/edit", isAuthenticated, performanceCtrls.edit_performance);
-Router.delete("/performance/delete", isAuthenticated, performanceCtrls.delete_performance);
-Router.delete("/calendar/delete", isAuthenticated, calendarCtrls.delete_calendar);
+Router.get(
+  "/performance/get",
+  isAuthenticated,
+  performanceCtrls.get_performance
+);
+Router.post(
+  "/performance/new",
+  isAuthenticated,
+  performanceCtrls.new_performance
+);
+Router.patch(
+  "/performance/edit",
+  isAuthenticated,
+  performanceCtrls.edit_performance
+);
+Router.delete(
+  "/performance/delete",
+  isAuthenticated,
+  performanceCtrls.delete_performance
+);
+Router.delete(
+  "/calendar/delete",
+  isAuthenticated,
+  calendarCtrls.delete_calendar
+);
 // Message Routes
 Router.get("/message/get", isAuthenticated, messageCtrls.get_message);
 Router.post("/message/new", isAuthenticated, messageCtrls.new_message);
@@ -113,6 +178,15 @@ Router.patch("/doubt/edit", isAuthenticated, doubtCtrls.edit_doubt);
 Router.delete("/doubt/delete", isAuthenticated, doubtCtrls.delete_doubt);
 // Analytics
 Router.post("/analytics/get", isAuthenticated, analyticsCtrls.get_analytics);
-Router.get("/analytics/mappings", isAuthenticated, analyticsCtrls.get_mappings);
+Router.post(
+  "/analytics/mappings",
+  isAuthenticated,
+  analyticsCtrls.get_lectures_analytics
+);
+Router.get(
+  "/analytics/courses",
+  isAuthenticated,
+  analyticsCtrls.get_courses_analytics
+);
 
 export default Router;

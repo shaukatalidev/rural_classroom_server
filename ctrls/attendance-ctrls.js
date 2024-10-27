@@ -86,57 +86,53 @@ export const new_attendance = async (req, res) => {
     // Identify user
     const user = req.user;
     if (!user) {
-      res.status(401).send({ message: "unauthorized" });
-      return;
+      return res.status(401).send({ message: "Unauthorized" });
     }
 
     // Extract attendance details from the request body
-    const { coordinator, lecture, studentPresent, classStrength } = req.body;
+    const { coordinator, lecture, attendance, percentage } = req.body;
 
-    // Check if attendance for the lecture already exists
-    const existingAttendance = await Attendance.findOne({ lecture });
-
-    // Define variables for updated attendance and percentage
-    let updatedAttendance, percentage, result;
+    // Check if attendance already exists with the same lecture and coordinator
+    const query = { coordinator, lecture };
+    let result;
+    const existingAttendance = await Attendance.findOne(query);
 
     if (existingAttendance) {
-      // Combine unique roll numbers
-      updatedAttendance = [
-        ...new Set([...existingAttendance.attendance, ...studentPresent]),
+      // Calculate the original student strength based on the existing percentage
+      const studentStrength =
+        (existingAttendance.attendance.length * 100) /
+        existingAttendance.percentage;
+
+      // Merge and remove duplicates from the attendance arrays
+      const combinedUnique = [
+        ...new Set([...existingAttendance.attendance, ...attendance]),
       ];
-      // Calculate attendance percentage
-      percentage = (updatedAttendance.length / classStrength) * 100;
+      const newPercentage = (combinedUnique.length / studentStrength) * 100;
 
       // Update existing attendance
-      result = await Attendance.findOneAndUpdate(
-        { lecture },
-        { coordinator, attendance: updatedAttendance, percentage },
-        { new: true }
-      );
+      result = await Attendance.updateOne(query, {
+        $set: {
+          attendance: combinedUnique,
+          percentage: newPercentage,
+        },
+      });
     } else {
-      // If no existing attendance, create new attendance
-      updatedAttendance = studentPresent;
-      percentage = (studentPresent.length / classStrength) * 100;
-
-      // Create new attendance record
+      // Create new attendance if none exists
       result = await Attendance.create({
-        lecture,
         coordinator,
-        attendance: updatedAttendance,
+        lecture,
+        attendance,
         percentage,
       });
     }
 
-    // Send response if creation/update was successful
     if (result) {
-      res.status(201).send({ data: result, message: "attendance recorded" });
+      res.status(201).send({ data: result, message: "Attendance recorded" });
     } else {
-      res.status(403).send({ message: "attendance not created or updated" });
+      res.status(403).send({ message: "Attendance not created or updated" });
     }
   } catch (err) {
-    res.status(res.statusCode < 400 ? 500 : res.statusCode).send({
-      message: err.message || "something went wrong",
-    });
+    res.status(500).send({ message: err.message || "Something went wrong" });
   }
 };
 

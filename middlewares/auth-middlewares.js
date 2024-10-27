@@ -16,8 +16,7 @@ export const isAuthenticated = async (req, res, next) => {
         // check if user exists
         const user = await User.findOne({ email: decoded.email });
         // set user
-        if (user)
-          req.user = user;
+        if (user) req.user = user;
         // next
         next();
       }
