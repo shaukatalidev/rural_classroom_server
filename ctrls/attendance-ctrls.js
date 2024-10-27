@@ -13,36 +13,53 @@ export const get_attendance = async (req, res) => {
       // get attendances
       const query = JSON.parse(req.query.query) || {};
       // check if _id is present and convert it to ObjectId
-      if (typeof query._id === "string") query._id = new mongoose.Types.ObjectId(query._id);
-      else if (typeof query._id === "object") Object.keys(query._id).forEach((key) => (query._id[key] = query._id[key].map((_id) => new mongoose.Types.ObjectId(_id))));
+      if (typeof query._id === "string")
+        query._id = new mongoose.Types.ObjectId(query._id);
+      else if (typeof query._id === "object")
+        Object.keys(query._id).forEach(
+          (key) =>
+            (query._id[key] = query._id[key].map(
+              (_id) => new mongoose.Types.ObjectId(_id)
+            ))
+        );
       const attendances = await Attendance.find(query);
 
       const temp = await Promise.all(
-        attendances.map(async attendance => {
-          const coordinatorQuery =  {_id: new mongoose.Types.ObjectId(attendance.coordinator)};
-          const lectureQuery =  {_id: new mongoose.Types.ObjectId(attendance.lecture)};
+        attendances.map(async (attendance) => {
+          const coordinatorQuery = {
+            _id: new mongoose.Types.ObjectId(attendance.coordinator),
+          };
+          const lectureQuery = {
+            _id: new mongoose.Types.ObjectId(attendance.lecture),
+          };
 
           const [coordinator] = await User.find(coordinatorQuery);
           const [lecture] = await Lecture.find(lectureQuery);
 
-          const courseQuery = {_id: new mongoose.Types.ObjectId(lecture.course)};
+          const courseQuery = {
+            _id: new mongoose.Types.ObjectId(lecture.course),
+          };
 
           const [course] = await Course.find(courseQuery);
 
-          const teacherQuery = {_id: new mongoose.Types.ObjectId(course.teacher)};
+          const teacherQuery = {
+            _id: new mongoose.Types.ObjectId(course.teacher),
+          };
 
           const [teacher] = await User.find(teacherQuery);
-          
+
           const attendances = await Promise.all(
-            attendance.attendance.map(async student => {
-              const studentQuery = {_id: new mongoose.Types.ObjectId(student)};
+            attendance.attendance.map(async (student) => {
+              const studentQuery = {
+                _id: new mongoose.Types.ObjectId(student),
+              };
 
               const [getStudent] = await Student.find(studentQuery);
               return getStudent;
             })
-          )
+          );
 
-          return ({
+          return {
             ...attendance.toObject(),
             coordinator,
             lecture: {
@@ -53,9 +70,9 @@ export const get_attendance = async (req, res) => {
               },
             },
             attendance: attendances,
-          })
+          };
         })
-      )
+      );
       res.status(200).send({ data: temp, message: "attendances found" });
     }
   } catch (err) {
@@ -66,26 +83,60 @@ export const get_attendance = async (req, res) => {
 
 export const new_attendance = async (req, res) => {
   try {
-    // identify user
+    // Identify user
     const user = req.user;
     if (!user) {
-      res.status(401);
-      throw new Error("unauthorized");
+      res.status(401).send({ message: "unauthorized" });
+      return;
+    }
+
+    // Extract attendance details from the request body
+    const { coordinator, lecture, studentPresent, classStrength } = req.body;
+
+    // Check if attendance for the lecture already exists
+    const existingAttendance = await Attendance.findOne({ lecture });
+
+    // Define variables for updated attendance and percentage
+    let updatedAttendance, percentage, result;
+
+    if (existingAttendance) {
+      // Combine unique roll numbers
+      updatedAttendance = [
+        ...new Set([...existingAttendance.attendance, ...studentPresent]),
+      ];
+      // Calculate attendance percentage
+      percentage = (updatedAttendance.length / classStrength) * 100;
+
+      // Update existing attendance
+      result = await Attendance.findOneAndUpdate(
+        { lecture },
+        { coordinator, attendance: updatedAttendance, percentage },
+        { new: true }
+      );
     } else {
-      // create attendance
-      const data = req.body;
-      const result = await new Attendance(data).save({ new: true });
-      // check if attendance created
-      if (!result) {
-        res.status(403);
-        throw new Error("attendance not created");
-      } else {
-        res.status(201).send({ data: result, message: "attendance created" });
-      }
+      // If no existing attendance, create new attendance
+      updatedAttendance = studentPresent;
+      percentage = (studentPresent.length / classStrength) * 100;
+
+      // Create new attendance record
+      result = await Attendance.create({
+        lecture,
+        coordinator,
+        attendance: updatedAttendance,
+        percentage,
+      });
+    }
+
+    // Send response if creation/update was successful
+    if (result) {
+      res.status(201).send({ data: result, message: "attendance recorded" });
+    } else {
+      res.status(403).send({ message: "attendance not created or updated" });
     }
   } catch (err) {
-    if (res.statusCode < 400) res.status(500);
-    res.send({ message: err.message || "something went wrong" });
+    res.status(res.statusCode < 400 ? 500 : res.statusCode).send({
+      message: err.message || "something went wrong",
+    });
   }
 };
 
@@ -102,8 +153,15 @@ export const edit_attendance = async (req, res) => {
       const { query, edits } = req.body;
       if (query) {
         // check if _id is present and convert it to ObjectId
-        if (typeof query._id === "string") query._id = new mongoose.Types.ObjectId(query._id);
-        else if (typeof query._id === "object") Object.keys(query._id).forEach((key) => (query._id[key] = query._id[key].map((_id) => new mongoose.Types.ObjectId(_id))));
+        if (typeof query._id === "string")
+          query._id = new mongoose.Types.ObjectId(query._id);
+        else if (typeof query._id === "object")
+          Object.keys(query._id).forEach(
+            (key) =>
+              (query._id[key] = query._id[key].map(
+                (_id) => new mongoose.Types.ObjectId(_id)
+              ))
+          );
         const result = await Attendance.updateMany(query, edits, { new: true });
         // check if attendance updated
         if (!result) {
@@ -136,8 +194,15 @@ export const delete_attendance = async (req, res) => {
       const { query } = req.body;
       if (query) {
         // check if _id is present and convert it to ObjectId
-        if (typeof query._id === "string") query._id = new mongoose.Types.ObjectId(query._id);
-        else if (typeof query._id === "object") Object.keys(query._id).forEach((key) => (query._id[key] = query._id[key].map((_id) => new mongoose.Types.ObjectId(_id))));
+        if (typeof query._id === "string")
+          query._id = new mongoose.Types.ObjectId(query._id);
+        else if (typeof query._id === "object")
+          Object.keys(query._id).forEach(
+            (key) =>
+              (query._id[key] = query._id[key].map(
+                (_id) => new mongoose.Types.ObjectId(_id)
+              ))
+          );
         const result = await Attendance.deleteMany(query);
         // check if attendance deleted
         if (!result) {
