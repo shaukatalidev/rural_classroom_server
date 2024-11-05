@@ -5,6 +5,7 @@ import {
   Question,
   Test,
   User,
+  Response,
 } from "../models.js";
 
 export const get_analytics = async (req, res) => {
@@ -14,9 +15,12 @@ export const get_analytics = async (req, res) => {
       return res.status(401).send({ message: "unauthorized" });
     }
 
-    const { course, test } = req.body;
+    const { course, test, coordinator } = req.body;
     console.log("course", course);
-    const { rawData, correctAnswers } = await get_data_for_test_analytics(test);
+    const { rawData, correctAnswers } = await get_data_for_test_analytics(
+      test,
+      coordinator
+    );
     // console.log("rawData", rawData[0]);
     const questionAnalytics = prepareQuestionAnalytics(rawData, correctAnswers);
     const studentScores = calculateStudentScores(rawData, correctAnswers);
@@ -251,7 +255,7 @@ function prepareQuestionAnalytics(rawData, correctAnswers) {
   });
 }
 
-const get_data_for_test_analytics = async (test) => {
+const get_data_for_test_analytics = async (test, coordinator) => {
   const test_data = await Test.findById(test);
   const rawData = [];
   const correctAnswers = {};
@@ -261,6 +265,9 @@ const get_data_for_test_analytics = async (test) => {
     correctAnswers[question_id] = question.answer;
     for (const response of responses) {
       const student = response.student;
+      if (student.split("_")[0] !== coordinator) {
+        continue;
+      }
       const student_answer = response.response;
       rawData.push({
         questionNo: question_id,
