@@ -90,7 +90,7 @@ export const new_attendance = async (req, res) => {
     }
 
     // Extract attendance details from the request body
-    const { coordinator, lecture, attendance, percentage } = req.body;
+    const { coordinator, lecture, attendance, percentage, course } = req.body;
 
     // Check if attendance already exists with the same lecture and coordinator
     const query = { coordinator, lecture };
@@ -123,6 +123,7 @@ export const new_attendance = async (req, res) => {
         lecture,
         attendance,
         percentage,
+        course,
       });
     }
 

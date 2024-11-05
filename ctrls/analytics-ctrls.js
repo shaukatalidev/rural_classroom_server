@@ -1,4 +1,12 @@
-import { Attendance, Course, Lecture, Test, User } from "../models.js";
+import {
+  Attendance,
+  Course,
+  Lecture,
+  Question,
+  Test,
+  User,
+  Response,
+} from "../models.js";
 
 export const get_analytics = async (req, res) => {
   try {
@@ -7,8 +15,15 @@ export const get_analytics = async (req, res) => {
       return res.status(401).send({ message: "unauthorized" });
     }
 
-    const { course } = req.body;
+    const { course, test, coordinator } = req.body;
     console.log("course", course);
+    const { rawData, correctAnswers } = await get_data_for_test_analytics(
+      test,
+      coordinator
+    );
+    // console.log("rawData", rawData[0]);
+    const questionAnalytics = prepareQuestionAnalytics(rawData, correctAnswers);
+    const studentScores = calculateStudentScores(rawData, correctAnswers);
 
     // Fetch attendances and collect unique lecture and coordinator IDs
     const attendances = await Attendance.find({ course });
@@ -84,7 +99,7 @@ export const get_analytics = async (req, res) => {
         coordinator,
         attendances: Object.entries(lectures).map(([lecture, attendance]) => ({
           lecture,
-          attendance,
+          attendance: attendance.map((item) => item.split("_").pop()),
         })),
       })
     );
@@ -95,6 +110,8 @@ export const get_analytics = async (req, res) => {
 
     res.status(200).send({
       data: formattedAttendance,
+      questionAnalytics,
+      studentScores,
       coordinatorNames,
       formattedAttendanceArray, // Added this to the response
       message: "analytics found",
@@ -185,3 +202,95 @@ export const get_lectures_analytics = async (req, res) => {
     res.send({ message: err.message || "something went wrong" });
   }
 };
+
+function prepareQuestionAnalytics(rawData, correctAnswers) {
+  const questionData = {};
+
+  // Initialize structure for each question
+  rawData.forEach(({ questionNo, response }) => {
+    if (!questionData[questionNo]) {
+      questionData[questionNo] = {
+        number: questionNo,
+        correctAnswer: correctAnswers[questionNo],
+        responses: {}, // Dynamic response object for this question
+        correctCount: 0,
+        totalCount: 0,
+      };
+    }
+
+    const question = questionData[questionNo];
+
+    // Initialize the response option if it hasn't been encountered yet
+    if (!question.responses[response]) {
+      question.responses[response] = 0;
+    }
+
+    // Increment response count and total count
+    question.responses[response] += 1;
+    question.totalCount += 1;
+
+    // Increment correct count if the response matches the correct answer
+    if (response === correctAnswers[questionNo]) {
+      question.correctCount += 1;
+    }
+  });
+
+  // Finalize question analytics
+  return Object.values(questionData).map((question, index) => {
+    // Determine the most common answer dynamically
+    const mostCommonAnswer = Object.keys(question.responses).reduce((a, b) =>
+      question.responses[a] > question.responses[b] ? a : b
+    );
+
+    return {
+      number: index + 1,
+      correctAnswer: question.correctAnswer,
+      mostCommonAnswer,
+      percentageCorrect: (
+        (question.correctCount / question.totalCount) *
+        100
+      ).toFixed(2),
+      distribution: question.responses,
+    };
+  });
+}
+
+const get_data_for_test_analytics = async (test, coordinator) => {
+  const test_data = await Test.findById(test);
+  const rawData = [];
+  const correctAnswers = {};
+  for (const question_id of test_data.questions) {
+    const responses = await Response.find({ question: question_id, test });
+    const question = await Question.findById(question_id);
+    correctAnswers[question_id] = question.answer;
+    for (const response of responses) {
+      const student = response.student;
+      if (student.split("_")[0] !== coordinator) {
+        continue;
+      }
+      const student_answer = response.response;
+      rawData.push({
+        questionNo: question_id,
+        rollNo: student.split("_")[1],
+        response: student_answer,
+      });
+    }
+  }
+  return { rawData, correctAnswers };
+};
+
+function calculateStudentScores(rawData, correctAnswers) {
+  const studentScores = {};
+
+  rawData.forEach(({ rollNo, questionNo, response }) => {
+    if (!studentScores[rollNo]) {
+      studentScores[rollNo] = { id: rollNo, score: 0 };
+    }
+
+    if (response === correctAnswers[questionNo]) {
+      studentScores[rollNo].score += 1;
+    }
+  });
+
+  return Object.values(studentScores);
+}

@@ -1,16 +1,18 @@
-import { percentDecodeBytes } from "whatwg-url";
-import { Attendance, Course, Lecture, Student, User } from "../models.js";
+import {
+  Attendance,
+  Course,
+  Lecture,
+  Student,
+  User,
+  Test,
+  Response,
+  Question,
+} from "../models.js";
+
+const coordinator = "67206fec1d8a427f2005d323";
 
 export const index = async (req, res) => {
-  // return await consolidateAttendance(req, res);
-  const coordinators = await User.find(
-    {
-      role: "coordinator",
-      courses: { $in: ["660d17232adc4239a1e66622"] },
-    },
-    { name: 1, _id: 1 }
-  );
-
-  console.log("coordinators", coordinators);
-  res.send({ message: "Welcome to the API" });
+  res.send({
+    message: "done",
+  });
 };
