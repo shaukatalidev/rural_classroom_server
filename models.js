@@ -123,6 +123,7 @@ const attendanceSchema = new mongoose.Schema(
   {
     coordinator: { type: String, required: true }, // coordinator _id
     lecture: { type: String, required: true }, // lecture _id
+    course: { type: String, required: true }, // course _id
     attendance: [{ type: String, required: true }], // student _ids
     percentage: { type: String, required: true }, // attendance percentage
   },
