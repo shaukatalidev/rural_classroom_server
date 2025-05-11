@@ -10,21 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H 104.248.123.210 >> ~/.ssh/known_hosts
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 147.182.138.182 >> ~/.ssh/known_hosts
 
-    - name: Deploy via SSH
-      run: |
-        ssh -i ~/.ssh/id_ed25519 root@104.248.123.210 << 'EOF'
-          cd /var/www/your-app
-          git pull origin main
-          npm install
-          pm2 restart your-app
-        EOF
+      - name: Deploy via SSH
+        run: |
+          ssh -i ~/.ssh/id_ed25519 root@147.182.138.182 << 'EOF'
+            cd /var/www/your-app
+            git pull origin main
+            npm install
+            pm2 restart your-app
+          EOF
