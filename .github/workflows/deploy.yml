@@ -23,7 +23,7 @@ jobs:
       - name: Deploy via SSH
         run: |
           ssh -i ~/.ssh/id_ed25519 root@147.182.138.182 << 'EOF'
-            cd /var/www/your-app
+            cd /rural_classroom_server
             git pull origin main
             npm install
             pm2 restart your-app
